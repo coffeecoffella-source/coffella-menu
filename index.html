@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>COFFELLA</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>html{scroll-behavior:smooth}</style>
+</head>
+<body class="bg-neutral-50">
+  <div id="root"></div>
+
+  <!-- React + ReactDOM + Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+
+    const menuData = {
+      cafeName: "COFFELLA",
+      logoText: "COFFELLA",
+      currency: "₸",
+      sections: [
+        {
+          id: "bar",
+          title: "Бар",
+          groups: [
+            {
+              title: "Кофейные напитки",
+              items: [
+                { name: "Эспрессо", price: 1000 },
+                { name: "Американо", variants: [{ label: "250 мл", price: 1100 }, { label: "350 мл", price: 1300 }] },
+                { name: "Капучино", variants: [{ label: "250 мл", price: 1300 }, { label: "350 мл", price: 1500 }, { label: "450 мл", price: 1700 }] },
+                { name: "Латте", variants: [{ label: "350 мл", price: 1400 }, { label: "450 мл", price: 1600 }] }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    function formatPrice(v, currency) {
+      if (!v || isNaN(Number(v))) return "";
+      return new Intl.NumberFormat("ru-RU").format(v) + " " + currency;
+    }
+
+    function App() {
+      const [query, setQuery] = React.useState("");
+      const [active, setActive] = React.useState("bar");
+      const data = menuData;
+
+      const filtered = React.useMemo(() => {
+        if (!query.trim()) return data.sections;
+        const q = query.toLowerCase();
+        return data.sections.map((s) => ({
+          ...s,
+          groups: s.groups
+            .map((g) => ({
+              ...g,
+              items: g.items.filter((it) =>
+                [it.name, it.desc, it.macros]
+                  .filter(Boolean)
+                  .join(" ")
+                  .toLowerCase()
+                  .includes(q)
+              ),
+            }))
+            .filter((g) => g.items.length > 0),
+        }));
+      }, [query, data.sections]);
+
+      return (
+        <div className="min-h-screen bg-neutral-50 text-neutral-900">
+          <header className="sticky top-0 z-50 backdrop-blur bg-white/80 border-b border-neutral-200">
+            <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
+              <a href="#top" className="font-black tracking-widest text-xl uppercase">{data.logoText}</a>
+              <nav className="ml-auto flex gap-2">
+                {data.sections.map((s) => (
+                  <a
+                    key={s.id}
+                    href={`#${s.id}`}
+                    onClick={() => setActive(s.id)}
+                    className={
+                      "px-3 py-1.5 rounded-full text-sm border transition " +
+                      (active === s.id
+                        ? "bg-neutral-900 text-white border-neutral-900"
+                        : "bg-white hover:bg-neutral-100 border-neutral-300")
+                    }
+                  >
+                    {s.title}
+                  </a>
+                ))}
+              </nav>
+            </div>
+            <div className="max-w-3xl mx-auto px-4 pb-3">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Поиск по меню…"
+                className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2 text-sm"
+              />
+            </div>
+          </header>
+
+          <main id="top" className="max-w-3xl mx-auto px-4 py-6">
+            {filtered.map((section) => (
+              <section id={section.id} key={section.id} className="scroll-mt-24">
+                <h2 className="text-2xl font-bold mt-6 mb-2">{section.title}</h2>
+                {section.groups.map((group, gi) => (
+                  <div key={gi} className="mb-5">
+                    <h3 className="text-lg font-semibold text-neutral-700 mb-2">{group.title}</h3>
+                    <div className="divide-y divide-neutral-200 rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                      {group.items.map((item, ii) => (
+                        <div key={ii} className="p-3 flex items-start gap-3">
+                          <div className="flex-1">
+                            <div className="font-medium">{item.name}</div>
+                            {item.desc && <div className="text-sm text-neutral-600">{item.desc}</div>}
+                          </div>
+                          {item.variants ? (
+                            <div className="flex flex-col items-end min-w-[160px] gap-1">
+                              {item.variants.map((v, vi) => (
+                                <div key={vi} className="text-sm whitespace-nowrap">
+                                  <span className="text-neutral-500 mr-2">{v.label}</span>
+                                  <span className="font-semibold">{formatPrice(v.price, data.currency)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-right min-w-[120px]">
+                              <div className="font-semibold">{formatPrice(item.price, data.currency)}</div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            ))}
+
+            <footer className="pt-10 pb-20 text-center text-sm text-neutral-500">
+              Handmade everyday • {new Date().getFullYear()}
+            </footer>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
